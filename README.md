@@ -46,11 +46,31 @@ The parser tests use local HTML fixtures and make no network requests:
 python -m unittest discover -s tests -v
 ```
 
+## Supabase
+
+1. Open **SQL Editor** in your Supabase project, paste the contents of
+   `supabase/schema.sql`, and click **Run** once.
+2. Copy `.env.example` to `.env` and fill in the project URL and the backend
+   **secret** key. Never put the secret key in browser JavaScript or commit `.env`.
+3. Test the integration with five books:
+
+```bash
+python scraper.py --max-books 5 --supabase --output data/sample_5.json --verbose
+```
+
+After verifying the four tables, expand to three pages and then the full catalogue:
+
+```bash
+python scraper.py --max-pages 3 --supabase --output data/books.json --verbose
+python scraper.py --supabase --output data/books.json --verbose
+```
+
 ## Planned architecture
 
 1. Scrape and validate small samples.
 2. Expand to multiple pages and then the full catalogue.
 3. Create normalized Supabase tables for books, categories, scrape runs, and
-   time-series observations (price, tax, stock, and rating).
+   time-series observations (price, tax, stock, and rating). **Implemented.**
 4. Upsert stable book metadata by UPC and append one observation per scrape run.
+   **Implemented; awaiting live database verification.**
 5. Build a frontend that reads current values and price/stock history.

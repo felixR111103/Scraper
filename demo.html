@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Search and explore data collected by the Books to Scrape Python scraper.">
+  <title>Bookfinder — Scraper Demo</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; --ink:#14231b; --muted:#66736b; --paper:#f3f0e7; --card:#fffefa; --forest:#173d2d; --green:#26734a; --line:#ddd9ce; --gold:#d49a29; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; background:var(--paper); color:var(--ink); }
+    button,input,select { font:inherit; }
+    header { background:var(--forest); color:white; }
+    .nav,.hero,main { width:min(1180px, calc(100% - 40px)); margin-inline:auto; }
+    .nav { display:flex; align-items:center; justify-content:space-between; padding:20px 0; }
+    .brand { display:flex; align-items:center; gap:11px; font-weight:800; letter-spacing:-.02em; }
+    .logo { display:grid; place-items:center; width:36px; height:36px; border-radius:10px; background:#e4b64f; color:var(--forest); }
+    .live { display:flex; align-items:center; gap:8px; color:#d8e7dd; font-size:14px; }
+    .live::before { content:""; width:8px; height:8px; border-radius:50%; background:#64da8b; box-shadow:0 0 0 5px rgba(100,218,139,.14); }
+    .hero { padding:62px 0 74px; }
+    .eyebrow { color:#e4b64f; text-transform:uppercase; letter-spacing:.14em; font-size:12px; font-weight:800; }
+    h1 { max-width:780px; margin:12px 0 16px; font-size:clamp(38px,6vw,70px); line-height:.98; letter-spacing:-.055em; }
+    .hero p { max-width:650px; margin:0; color:#c9dbd0; font-size:17px; line-height:1.65; }
+    main { padding:0 0 72px; }
+    .controls { position:relative; z-index:2; display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:12px; margin-top:-28px; padding:16px; border:1px solid rgba(20,35,27,.08); border-radius:18px; background:rgba(255,254,250,.97); box-shadow:0 18px 48px rgba(20,35,27,.12); }
+    .field { position:relative; }
+    .field label { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+    .field input,.field select { width:100%; height:48px; padding:0 14px; border:1px solid var(--line); border-radius:11px; background:white; color:var(--ink); outline:none; }
+    .field input { padding-left:42px; }
+    .field input:focus,.field select:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(38,115,74,.12); }
+    .search-icon { position:absolute; left:15px; top:13px; color:var(--muted); font-size:20px; pointer-events:none; }
+    .summary { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:72px; }
+    #result-count { color:var(--muted); }
+    #result-count strong { color:var(--ink); }
+    .clear { border:0; background:transparent; color:var(--green); font-weight:750; cursor:pointer; padding:8px 0; }
+    .clear:hover { text-decoration:underline; }
+    #books { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; }
+    article { display:flex; flex-direction:column; min-width:0; overflow:hidden; background:var(--card); border:1px solid rgba(20,35,27,.08); border-radius:18px; box-shadow:0 6px 24px rgba(31,48,39,.06); transition:transform .2s,box-shadow .2s; }
+    article:hover { transform:translateY(-4px); box-shadow:0 15px 38px rgba(31,48,39,.12); }
+    .cover-wrap { position:relative; display:grid; place-items:center; height:280px; padding:24px; background:linear-gradient(145deg,#e6e1d4,#f4f1e9); }
+    .cover-wrap img { display:block; max-width:180px; width:100%; height:232px; object-fit:contain; filter:drop-shadow(0 12px 9px rgba(20,35,27,.18)); }
+    .category { position:absolute; left:14px; top:14px; max-width:calc(100% - 28px); padding:6px 9px; overflow:hidden; border-radius:999px; background:rgba(255,254,250,.92); color:var(--forest); font-size:12px; font-weight:750; text-overflow:ellipsis; white-space:nowrap; }
+    .content { display:flex; flex:1; flex-direction:column; padding:20px; }
+    h2 { margin:0 0 10px; font-size:20px; line-height:1.25; letter-spacing:-.025em; }
+    .upc { color:var(--muted); font-size:12px; }
+    .facts { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin:18px 0; padding-top:16px; border-top:1px solid var(--line); }
+    .price { font-size:26px; font-weight:850; letter-spacing:-.04em; }
+    .rating { color:var(--gold); letter-spacing:1px; white-space:nowrap; }
+    .stock { color:var(--muted); font-size:13px; }
+    .source-link { margin-top:auto; color:var(--green); font-weight:750; text-decoration:none; }
+    .source-link:hover { text-decoration:underline; }
+    .empty,.error { grid-column:1/-1; padding:64px 24px; text-align:center; border:1px dashed #c8c2b5; border-radius:18px; color:var(--muted); }
+    .empty strong,.error strong { display:block; margin-bottom:7px; color:var(--ink); font-size:20px; }
+    .skeleton { min-height:430px; background:linear-gradient(100deg,#ece8dc 20%,#f8f6ef 40%,#ece8dc 60%); background-size:200% 100%; animation:shimmer 1.2s infinite; }
+    @keyframes shimmer { to { background-position-x:-200%; } }
+    @media (max-width:900px) { .controls{grid-template-columns:1fr 1fr}.search-field{grid-column:1/-1}#books{grid-template-columns:repeat(2,minmax(0,1fr))} }
+    @media (max-width:600px) { .nav,.hero,main{width:min(100% - 24px,1180px)}.hero{padding:42px 0 58px}.controls{grid-template-columns:1fr;margin-top:-18px}.search-field{grid-column:auto}#books{grid-template-columns:1fr}.summary{align-items:flex-start;padding:18px 0}.cover-wrap{height:250px} }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="nav" aria-label="Main navigation"><div class="brand"><span class="logo" aria-hidden="true">B</span> Bookfinder</div><div class="live">Scraper data loaded</div></nav>
+    <div class="hero"><div class="eyebrow">NOVA SBE · AI Fundamentals</div><h1>Find your next interesting read.</h1><p>Search the catalogue collected by our Python scraper. Filter by category or rating, compare prices, and open the original product page.</p></div>
+  </header>
+  <main>
+    <section class="controls" aria-label="Book filters">
+      <div class="field search-field"><label for="search">Search books</label><span class="search-icon" aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search title, UPC, category or description…" autocomplete="off"></div>
+      <div class="field"><label for="category">Category</label><select id="category"><option value="">All categories</option></select></div>
+      <div class="field"><label for="rating">Minimum rating</label><select id="rating"><option value="0">Any rating</option><option value="4">4+ stars</option><option value="3">3+ stars</option><option value="2">2+ stars</option></select></div>
+      <div class="field"><label for="sort">Sort books</label><select id="sort"><option value="title-asc">Title A–Z</option><option value="price-asc">Price: low to high</option><option value="price-desc">Price: high to low</option><option value="rating-desc">Highest rated</option><option value="stock-desc">Most in stock</option></select></div>
+    </section>
+    <div class="summary"><div id="result-count" aria-live="polite">Loading books…</div><button id="clear" class="clear" type="button">Clear filters</button></div>
+    <section id="books" aria-label="Book search results"><div class="skeleton" aria-hidden="true"></div><div class="skeleton" aria-hidden="true"></div><div class="skeleton" aria-hidden="true"></div></section>
+  </main>
+  <script>
+    const state={books:[],query:'',category:'',rating:0,sort:'title-asc'};
+    const elements={books:document.querySelector('#books'),count:document.querySelector('#result-count'),search:document.querySelector('#search'),category:document.querySelector('#category'),rating:document.querySelector('#rating'),sort:document.querySelector('#sort'),clear:document.querySelector('#clear')};
+    const escapeHtml=value=>String(value??'').replace(/[&<>'"]/g,character=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[character]));
+    const normalized=value=>String(value??'').toLocaleLowerCase();
+    function getVisibleBooks(){
+      const query=normalized(state.query.trim());
+      const filtered=state.books.filter(book=>{
+        const searchable=[book.title,book.upc,book.category,book.description].map(normalized).join(' ');
+        return(!query||searchable.includes(query))&&(!state.category||book.category===state.category)&&Number(book.rating)>=state.rating;
+      });
+      const sorters={'title-asc':(a,b)=>a.title.localeCompare(b.title),'price-asc':(a,b)=>Number(a.price_incl_tax_gbp)-Number(b.price_incl_tax_gbp),'price-desc':(a,b)=>Number(b.price_incl_tax_gbp)-Number(a.price_incl_tax_gbp),'rating-desc':(a,b)=>Number(b.rating)-Number(a.rating)||a.title.localeCompare(b.title),'stock-desc':(a,b)=>Number(b.stock_count)-Number(a.stock_count)};
+      return filtered.sort(sorters[state.sort]);
+    }
+    function render(){
+      const books=getVisibleBooks();
+      elements.count.innerHTML=`<strong>${books.length}</strong> of ${state.books.length} books`;
+      if(!books.length){elements.books.innerHTML='<div class="empty"><strong>No books found</strong>Try a different title or clear your filters.</div>';return;}
+      elements.books.innerHTML=books.map(book=>`<article><div class="cover-wrap"><span class="category">${escapeHtml(book.category)}</span><img src="${escapeHtml(book.image_url)}" alt="Cover of ${escapeHtml(book.title)}" loading="lazy"></div><div class="content"><h2>${escapeHtml(book.title)}</h2><div class="upc">UPC ${escapeHtml(book.upc)}</div><div class="facts"><div><div class="price">£${escapeHtml(book.price_incl_tax_gbp)}</div><div class="stock">${escapeHtml(book.stock_count)} available</div></div><div class="rating" title="${escapeHtml(book.rating)} out of 5 stars" aria-label="${escapeHtml(book.rating)} out of 5 stars">${'★'.repeat(book.rating)}${'☆'.repeat(5-book.rating)}</div></div><a class="source-link" href="${escapeHtml(book.product_url)}" target="_blank" rel="noreferrer">View book details →</a></div></article>`).join('');
+    }
+    elements.search.addEventListener('input',event=>{state.query=event.target.value;render()});
+    elements.category.addEventListener('change',event=>{state.category=event.target.value;render()});
+    elements.rating.addEventListener('change',event=>{state.rating=Number(event.target.value);render()});
+    elements.sort.addEventListener('change',event=>{state.sort=event.target.value;render()});
+    elements.clear.addEventListener('click',()=>{state.query='';state.category='';state.rating=0;state.sort='title-asc';elements.search.value='';elements.category.value='';elements.rating.value='0';elements.sort.value='title-asc';elements.search.focus();render()});
+    fetch('data/books.json').then(response=>{if(!response.ok)throw new Error(`Data request failed (${response.status})`);return response.json()}).then(books=>{state.books=books;[...new Set(books.map(book=>book.category))].sort().forEach(category=>elements.category.insertAdjacentHTML('beforeend',`<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`));render()}).catch(error=>{elements.count.textContent='Unable to load catalogue';elements.books.innerHTML=`<div class="error"><strong>Could not load the scraped data</strong>${escapeHtml(error.message)}</div>`});
+  </script>
+</body>
+</html>
+
