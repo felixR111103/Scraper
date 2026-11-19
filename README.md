@@ -1,76 +1,59 @@
-# Books to Scrape project
+# Books to Scrape
 
-This project starts with an isolated Python scraper for the educational sandbox at
-[Books to Scrape](https://books.toscrape.com/). It collects full product details and
-writes JSON, JSON Lines, or CSV files. The output includes a UTC `scraped_at`
-timestamp so it can later feed a price and availability history table in Supabase.
+This repository has one scraper and one frontend. The scraper writes the book catalogue to a local JSON file; the frontend reads that file.
 
-## Setup
+## The files you need
 
-Python 3.11 or newer is recommended.
+| File or folder | Purpose |
+|---|---|
+| `scraper.py` | Scrapes the book website, sorts the results by title, and writes `data/books.json`. |
+| `index.html` | The Bookfinder frontend. It reads `data/books.json` and provides search, filters, sorting, and book details. |
+| `data/books.json` | Generated catalogue data. It appears after you run the scraper. |
+| `requirements.txt` | Python libraries needed by the scraper. |
+| `README.md` | This setup guide. |
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-```
+These folders/files are supporting or optional:
 
-## Run progressively
+- `tests/` contains automated checks; it is not needed to open the frontend.
+- `supabase_store.py` is the scraper's helper for the optional upload; keep it beside `scraper.py`. The frontend does not use Supabase. `supabase/schema.sql` and `.env.example` are only needed if you configure that upload.
+- `.gitignore` and `data/.gitkeep` are Git housekeeping files.
 
-Start with five books:
+There is no separate demo page anymore: `index.html` is the actual frontend.
 
-```bash
-python scraper.py --max-books 5 --output data/sample_5.json --verbose
-```
+## Run it on your computer
 
-Then scrape three catalogue pages (up to 60 books):
-
-```bash
-python scraper.py --max-pages 3 --output data/three_pages.csv --verbose
-```
-
-Finally, omit both limits to scrape all available pages:
+Open Terminal in the repository folder, then run:
 
 ```bash
-python scraper.py --output data/all_books.jsonl --verbose
+python3 -m pip install -r requirements.txt
+python3 scraper.py
+python3 -m http.server 8000
 ```
 
-The default 0.25-second delay is intentionally gentle. Adjust it with `--delay`,
-but keep a delay for larger runs. Run `python scraper.py --help` for all options.
+Keep the Terminal window open while using the site. Open:
 
-## Tests
+[http://localhost:8000/](http://localhost:8000/)
 
-The parser tests use local HTML fixtures and make no network requests:
+The first command installs the scraper's dependencies. The second scrapes and creates the sorted `data/books.json`. The third serves the project so the browser can load that JSON file. Do not open `index.html` by double-clicking it; browsers do not reliably allow it to fetch the JSON file from disk.
+
+To try a smaller scrape first:
 
 ```bash
-python -m unittest discover -s tests -v
+python3 scraper.py --max-books 5
 ```
 
-## Supabase
+The frontend shows each book's cover, description, category, price, rating, availability, stock, reviews, and original product link. It can search by title, UPC, category, or description, filter by category or minimum rating, and sort by title, price, rating, or stock. Expand **All scraped information** on a card for the remaining scraped fields.
 
-1. Open **SQL Editor** in your Supabase project, paste the contents of
-   `supabase/schema.sql`, and click **Run** once.
-2. Copy `.env.example` to `.env` and fill in the project URL and the backend
-   **secret** key. Never put the secret key in browser JavaScript or commit `.env`.
-3. Test the integration with five books:
+## Optional: upload a copy to Supabase
+
+Supabase is not needed to run the scraper or frontend. To also upload a scrape to Supabase, configure `SUPABASE_URL` and a backend secret key in `.env`, apply `supabase/schema.sql`, and run:
 
 ```bash
-python scraper.py --max-books 5 --supabase --output data/sample_5.json --verbose
+python3 scraper.py --supabase
 ```
 
-After verifying the four tables, expand to three pages and then the full catalogue:
+Never put the backend secret key in browser code.
 
-```bash
-python scraper.py --max-pages 3 --supabase --output data/books.json --verbose
-python scraper.py --supabase --output data/books.json --verbose
-```
+## Hosted frontend
 
-## Planned architecture
-
-1. Scrape and validate small samples.
-2. Expand to multiple pages and then the full catalogue.
-3. Create normalized Supabase tables for books, categories, scrape runs, and
-   time-series observations (price, tax, stock, and rating). **Implemented.**
-4. Upsert stable book metadata by UPC and append one observation per scrape run.
-   **Implemented; awaiting live database verification.**
-5. Build a frontend that reads current values and price/stock history.
+GitHub Pages is not enabled for this repository, so there is no hosted frontend URL yet. To host it, GitHub Pages must be enabled and the generated `data/books.json` must be included in the published site beside the `data/` folder. The repository is public, so a GitHub Pages site would also be public.
