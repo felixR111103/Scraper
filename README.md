@@ -1,9 +1,6 @@
 # Books to Scrape project
 
-This project starts with an isolated Python scraper for the educational sandbox at
-[Books to Scrape](https://books.toscrape.com/). It collects full product details and
-writes JSON, JSON Lines, or CSV files. The output includes a UTC `scraped_at`
-timestamp so it can later feed a price and availability history table in Supabase.
+This project scrapes book information from [Books to Scrape](https://books.toscrape.com/), saves it as a sorted local JSON file, and uses that file as the data source for the Bookfinder interface.
 
 ## Setup
 
@@ -15,70 +12,50 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-## Run progressively
+## Scrape books into local data
 
-Start with five books:
-
-```bash
-python scraper.py --max-books 5 --output data/sample_5.json --verbose
-```
-
-Then scrape three catalogue pages (up to 60 books):
+Run the scraper from the project folder:
 
 ```bash
-python scraper.py --max-pages 3 --output data/three_pages.csv --verbose
+python scraper.py
 ```
 
-Finally, omit both limits to scrape all available pages:
+By default, this fetches the catalogue, extracts each book's details, sorts the records alphabetically by title, and writes them to `data/books.json`. You can limit the run while trying it out:
 
 ```bash
-python scraper.py --output data/all_books.jsonl --verbose
+python scraper.py --max-books 5 --verbose
 ```
 
-The default 0.25-second delay is intentionally gentle. Adjust it with `--delay`,
-but keep a delay for larger runs. Run `python scraper.py --help` for all options.
+The local JSON includes title, category, description, rating, prices and tax, availability and stock count, review count, product and image URLs, UPC, and the UTC scrape time. Use `--output` to choose another JSON, JSONL, or CSV file.
+
+## View the interface using the local data
+
+The interface reads `data/books.json` directly. After running the scraper, start a small local web server from the project folder:
+
+```bash
+python -m http.server 8000
+```
+
+Then open [http://localhost:8000/demo.html](http://localhost:8000/demo.html). Do not open `demo.html` as a `file://` URL; browsers block its data-file request in that mode.
+
+The interface displays book covers, descriptions, categories, prices, ratings, availability, and reviews. It supports searching by title, UPC, category, or description, filtering by category and minimum rating, and sorting by title, price, rating, or stock. Expand **All scraped information** on a book card to see the remaining scraped fields.
+
+For a hosted website, publish `demo.html` and the generated `data/books.json` together, preserving the `data/` folder path. The live interface needs the JSON file in the same website deployment.
+
+## Optional Supabase upload
+
+Supabase is optional and separate from the local-file interface. If configured, the scraper can also upload a run by adding `--supabase`:
+
+```bash
+python scraper.py --max-books 5 --supabase
+```
+
+This requires `SUPABASE_URL`, a backend secret key in `.env`, and the schema in `supabase/schema.sql`. Never put the secret key in browser code. The Bookfinder interface reads the local JSON file, not Supabase.
 
 ## Tests
 
-The parser tests use local HTML fixtures and make no network requests:
+Parser tests use local HTML fixtures and make no network requests:
 
 ```bash
 python -m unittest discover -s tests -v
 ```
-
-## Supabase
-
-1. Open **SQL Editor** in your Supabase project, paste the contents of
-   `supabase/schema.sql`, and click **Run** once.
-2. Copy `.env.example` to `.env` and fill in the project URL and the backend
-   **secret** key. Never put the secret key in browser JavaScript or commit `.env`.
-3. Test the integration with five books:
-
-```bash
-python scraper.py --max-books 5 --supabase --output data/sample_5.json --verbose
-```
-
-After verifying the four tables, expand to three pages and then the full catalogue:
-
-```bash
-python scraper.py --max-pages 3 --supabase --output data/books.json --verbose
-python scraper.py --supabase --output data/books.json --verbose
-```
-
-### Connect the Bookfinder interface
-
-The `demo.html` page reads from Supabase's read-only `current_books` view. It is configured for this project. To use another Supabase project, update the `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` constants in `demo.html`. A publishable key (or legacy anon key) is intended for browser use; never use `SUPABASE_SECRET_KEY` in the page.
-
-Apply `supabase/schema.sql` and run the scraper with `--supabase` so the catalogue is present in the database.
-
-The existing SQL schema enables row-level security and grants browser users read access to catalogue records. The page fetches rows in batches of 500 and keeps its search, category, rating, and sorting controls in the browser.
-
-## Planned architecture
-
-1. Scrape and validate small samples.
-2. Expand to multiple pages and then the full catalogue.
-3. Create normalized Supabase tables for books, categories, scrape runs, and
-   time-series observations (price, tax, stock, and rating). **Implemented.**
-4. Upsert stable book metadata by UPC and append one observation per scrape run.
-   **Implemented; awaiting live database verification.**
-5. Build a frontend that reads current values and price/stock history. **Current-value Bookfinder frontend implemented; price/stock history display remains planned.**
