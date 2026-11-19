@@ -65,6 +65,14 @@ python scraper.py --max-pages 3 --supabase --output data/books.json --verbose
 python scraper.py --supabase --output data/books.json --verbose
 ```
 
+### Connect the Bookfinder interface
+
+The `demo.html` page reads from Supabase's read-only `current_books` view. It is configured for this project. To use another Supabase project, update the `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` constants in `demo.html`. A publishable key (or legacy anon key) is intended for browser use; never use `SUPABASE_SECRET_KEY` in the page.
+
+Apply `supabase/schema.sql` and run the scraper with `--supabase` so the catalogue is present in the database.
+
+The existing SQL schema enables row-level security and grants browser users read access to catalogue records. The page fetches rows in batches of 500 and keeps its search, category, rating, and sorting controls in the browser.
+
 ## Planned architecture
 
 1. Scrape and validate small samples.
@@ -73,4 +81,4 @@ python scraper.py --supabase --output data/books.json --verbose
    time-series observations (price, tax, stock, and rating). **Implemented.**
 4. Upsert stable book metadata by UPC and append one observation per scrape run.
    **Implemented; awaiting live database verification.**
-5. Build a frontend that reads current values and price/stock history.
+5. Build a frontend that reads current values and price/stock history. **Current-value Bookfinder frontend implemented; price/stock history display remains planned.**
