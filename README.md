@@ -1,9 +1,9 @@
 # Books to Scrape project
 
-This project scrapes the educational sandbox at
-[Books to Scrape](https://books.toscrape.com/) and always saves each completed run to
-Supabase. You can also request a local JSON, JSON Lines, or CSV export; every record
-includes a UTC `scraped_at` timestamp for price and availability history.
+This project starts with an isolated Python scraper for the educational sandbox at
+[Books to Scrape](https://books.toscrape.com/). It collects full product details and
+writes JSON, JSON Lines, or CSV files. The output includes a UTC `scraped_at`
+timestamp so it can later feed a price and availability history table in Supabase.
 
 ## Setup
 
@@ -20,7 +20,7 @@ python -m pip install -r requirements.txt
 Start with five books:
 
 ```bash
-python scraper.py --max-books 5 --verbose
+python scraper.py --max-books 5 --output data/sample_5.json --verbose
 ```
 
 Then scrape three catalogue pages (up to 60 books):
@@ -35,11 +35,8 @@ Finally, omit both limits to scrape all available pages:
 python scraper.py --output data/all_books.jsonl --verbose
 ```
 
-Every run requires valid Supabase credentials and the database schema. The scraper
-checks them before fetching the site. The local export is optional; use `--output`
-only when you also want a file copy. The default 0.25-second delay is intentionally
-gentle. Adjust it with `--delay`, but keep a delay for larger runs. Run
-`python scraper.py --help` for all options.
+The default 0.25-second delay is intentionally gentle. Adjust it with `--delay`,
+but keep a delay for larger runs. Run `python scraper.py --help` for all options.
 
 ## Tests
 
@@ -55,24 +52,24 @@ python -m unittest discover -s tests -v
    `supabase/schema.sql`, and click **Run** once.
 2. Copy `.env.example` to `.env` and fill in the project URL and the backend
    **secret** key. Never put the secret key in browser JavaScript or commit `.env`.
-3. Start with five books (the upload to Supabase is automatic):
+3. Test the integration with five books:
 
 ```bash
-python scraper.py --max-books 5 --verbose
+python scraper.py --max-books 5 --supabase --output data/sample_5.json --verbose
 ```
 
 After verifying the four tables, expand to three pages and then the full catalogue:
 
 ```bash
-python scraper.py --max-pages 3 --output data/books.json --verbose
-python scraper.py --verbose
+python scraper.py --max-pages 3 --supabase --output data/books.json --verbose
+python scraper.py --supabase --output data/books.json --verbose
 ```
 
 ### Connect the Bookfinder interface
 
 The `demo.html` page reads from Supabase's read-only `current_books` view. It is configured for this project. To use another Supabase project, update the `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` constants in `demo.html`. A publishable key (or legacy anon key) is intended for browser use; never use `SUPABASE_SECRET_KEY` in the page.
 
-Apply `supabase/schema.sql` and run the scraper normally; every run is saved to Supabase.
+Apply `supabase/schema.sql` and run the scraper with `--supabase` so the catalogue is present in the database.
 
 The existing SQL schema enables row-level security and grants browser users read access to catalogue records. The page fetches rows in batches of 500 and keeps its search, category, rating, and sorting controls in the browser.
 
