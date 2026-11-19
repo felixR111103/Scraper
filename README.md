@@ -69,9 +69,8 @@ python scraper.py --supabase --output data/books.json --verbose
 
 The `demo.html` page reads from Supabase's read-only `current_books` view. Before opening or publishing the page:
 
-1. Set `SUPABASE_URL` in `demo.html` to your Supabase project URL.
-2. Set `SUPABASE_PUBLISHABLE_KEY` to the project's publishable key (or legacy anon key). This key is intended for browser use; never use `SUPABASE_SECRET_KEY` here.
-3. Run the scraper with `--supabase` so the catalogue is present in the database.
+1. The page is configured with this project's `SUPABASE_URL` and publishable key in `demo.html`. If you point it at a different Supabase project, update those two constants. A publishable key (or legacy anon key) is intended for browser use; never use `SUPABASE_SECRET_KEY` in the page.
+2. Run the scraper with `--supabase` so the catalogue is present in the database.
 
 The existing SQL schema enables row-level security and grants browser users read access to catalogue records. The page fetches rows in batches of 500 and keeps its search, category, rating, and sorting controls in the browser.
 
