@@ -83,4 +83,4 @@ The existing SQL schema enables row-level security and grants browser users read
    time-series observations (price, tax, stock, and rating). **Implemented.**
 4. Upsert stable book metadata by UPC and append one observation per scrape run.
    **Implemented; awaiting live database verification.**
-5. Build a frontend that reads current values and price/stock history.
+5. Build a frontend that reads current values and price/stock history. **Current-value Bookfinder frontend implemented; price/stock history display remains planned.**
