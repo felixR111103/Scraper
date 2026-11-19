@@ -110,7 +110,7 @@
 
       const books = [];
       for (let offset = 0; ; offset += PAGE_SIZE) {
-        const endpoint = new URL(`${SUPABASE_URL.replace(/\\/+$/, '')}/rest/v1/current_books`);
+        const endpoint = new URL(SUPABASE_URL.replace(/\/+$/, '') + '/rest/v1/current_books');
         endpoint.search = new URLSearchParams({
           select: '*',
           order: 'title.asc',
