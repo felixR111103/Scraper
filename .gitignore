@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 data/*.json
+!data/books.json
 data/*.jsonl
 data/*.csv
 !data/.gitkeep
