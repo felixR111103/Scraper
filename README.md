@@ -67,10 +67,9 @@ python scraper.py --supabase --output data/books.json --verbose
 
 ### Connect the Bookfinder interface
 
-The `demo.html` page reads from Supabase's read-only `current_books` view. Before opening or publishing the page:
+The `demo.html` page reads from Supabase's read-only `current_books` view. It is configured for this project. To use another Supabase project, update the `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` constants in `demo.html`. A publishable key (or legacy anon key) is intended for browser use; never use `SUPABASE_SECRET_KEY` in the page.
 
-1. The page is configured with this project's `SUPABASE_URL` and publishable key in `demo.html`. If you point it at a different Supabase project, update those two constants. A publishable key (or legacy anon key) is intended for browser use; never use `SUPABASE_SECRET_KEY` in the page.
-2. Run the scraper with `--supabase` so the catalogue is present in the database.
+Apply `supabase/schema.sql` and run the scraper with `--supabase` so the catalogue is present in the database.
 
 The existing SQL schema enables row-level security and grants browser users read access to catalogue records. The page fetches rows in batches of 500 and keeps its search, category, rating, and sorting controls in the browser.
 
