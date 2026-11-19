@@ -97,7 +97,56 @@
     elements.rating.addEventListener('change',event=>{state.rating=Number(event.target.value);render()});
     elements.sort.addEventListener('change',event=>{state.sort=event.target.value;render()});
     elements.clear.addEventListener('click',()=>{state.query='';state.category='';state.rating=0;state.sort='title-asc';elements.search.value='';elements.category.value='';elements.rating.value='0';elements.sort.value='title-asc';elements.search.focus();render()});
-    fetch('data/books.json').then(response=>{if(!response.ok)throw new Error(`Data request failed (${response.status})`);return response.json()}).then(books=>{state.books=books;[...new Set(books.map(book=>book.category))].sort().forEach(category=>elements.category.insertAdjacentHTML('beforeend',`<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`));render()}).catch(error=>{elements.count.textContent='Unable to load catalogue';elements.books.innerHTML=`<div class="error"><strong>Could not load the scraped data</strong>${escapeHtml(error.message)}</div>`});
+    // A publishable key is safe for browser use because the SQL schema grants read-only access.
+    // Never put the Supabase secret key in this file.
+    const SUPABASE_URL = 'https://your-project.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_your_key';
+    const PAGE_SIZE = 500;
+
+    async function fetchSupabaseBooks() {
+      if (SUPABASE_URL.includes('your-project') || SUPABASE_PUBLISHABLE_KEY.includes('your_key')) {
+        throw new Error('Add your Supabase project URL and publishable key in demo.html.');
+      }
+
+      const books = [];
+      for (let offset = 0; ; offset += PAGE_SIZE) {
+        const endpoint = new URL(`${SUPABASE_URL.replace(/\\/+$/, '')}/rest/v1/current_books`);
+        endpoint.search = new URLSearchParams({
+          select: '*',
+          order: 'title.asc',
+          limit: String(PAGE_SIZE),
+          offset: String(offset)
+        });
+
+        const response = await fetch(endpoint, {
+          headers: {
+            apikey: SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
+          }
+        });
+        if (!response.ok) {
+          const details = await response.text();
+          throw new Error(`Supabase request failed (${response.status})${details ? `: ${details.slice(0, 240)}` : ''}`);
+        }
+
+        const page = await response.json();
+        if (!Array.isArray(page)) throw new Error('Supabase returned an unexpected response.');
+        books.push(...page);
+        if (page.length < PAGE_SIZE) break;
+      }
+      return books;
+    }
+
+    fetchSupabaseBooks().then(books=>{
+      state.books=books;
+      [...new Set(books.map(book=>book.category))].sort().forEach(category=>
+        elements.category.insertAdjacentHTML('beforeend',`<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`)
+      );
+      render();
+    }).catch(error=>{
+      elements.count.textContent='Unable to load catalogue';
+      elements.books.innerHTML=`<div class="error"><strong>Could not load the Supabase catalogue</strong>${escapeHtml(error.message)}</div>`;
+    });
   </script>
 </body>
 </html>
