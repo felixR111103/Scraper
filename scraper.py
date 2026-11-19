@@ -2,7 +2,7 @@
 """Standalone scraper for https://books.toscrape.com/.
 
 Examples:
-    python scraper.py --max-books 5 --output data/sample_5.json
+    python scraper.py --max-books 5
     python scraper.py --max-pages 3 --output data/three_pages.csv
 """
 
@@ -219,18 +219,20 @@ def non_negative_float(value: str) -> float:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Scrape book data from books.toscrape.com")
+    parser = argparse.ArgumentParser(
+        description="Scrape books from books.toscrape.com and store them in Supabase"
+    )
     limits = parser.add_mutually_exclusive_group()
     limits.add_argument("--max-books", type=positive_int, help="Stop after this many books")
     limits.add_argument("--max-pages", type=positive_int, help="Stop after this many 20-book pages")
-    parser.add_argument("--output", type=Path, default=Path("data/books.json"))
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Also save a local copy as .json, .jsonl, or .csv",
+    )
     parser.add_argument("--delay", type=non_negative_float, default=0.25, help="Delay between requests")
     parser.add_argument("--timeout", type=non_negative_float, default=20.0, help="Request timeout")
-    parser.add_argument(
-        "--supabase",
-        action="store_true",
-        help="Upload the scraped records to the configured Supabase database",
-    )
     parser.add_argument("--verbose", action="store_true")
     return parser
 
@@ -243,22 +245,27 @@ def main() -> int:
     )
     scraper = BooksScraper(delay=args.delay, timeout=args.timeout)
     try:
+        # Validate Supabase configuration and schema before making scrape requests.
+        store = SupabaseStore.from_env()
+        store.check_schema()
         books = scraper.scrape(max_books=args.max_books, max_pages=args.max_pages)
-        count = write_books(books, args.output)
-        run_id = None
-        if args.supabase:
-            store = SupabaseStore.from_env()
-            run_id = store.upload_books(
-                books,
-                max_books=args.max_books,
-                max_pages=args.max_pages,
-            )
+        run_id = store.upload_books(
+            books,
+            max_books=args.max_books,
+            max_pages=args.max_pages,
+        )
     except (requests.RequestException, ScrapeError, SupabaseError, OSError, ValueError) as error:
         logging.error("Scrape failed: %s", error)
         return 1
-    print(f"Saved {count} books to {args.output}")
-    if run_id:
-        print(f"Uploaded {count} books to Supabase (run {run_id})")
+
+    print(f"Uploaded {len(books)} books to Supabase (run {run_id})")
+    if args.output is not None:
+        try:
+            write_books(books, args.output)
+        except (OSError, ValueError) as error:
+            logging.warning("Supabase upload succeeded, but local export failed: %s", error)
+        else:
+            print(f"Also saved {len(books)} books to {args.output}")
     return 0
 
 
