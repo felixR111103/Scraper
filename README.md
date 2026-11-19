@@ -1,61 +1,59 @@
-# Books to Scrape project
+# Books to Scrape
 
-This project scrapes book information from [Books to Scrape](https://books.toscrape.com/), saves it as a sorted local JSON file, and uses that file as the data source for the Bookfinder interface.
+This repository has one scraper and one frontend. The scraper writes the book catalogue to a local JSON file; the frontend reads that file.
 
-## Setup
+## The files you need
 
-Python 3.11 or newer is recommended.
+| File or folder | Purpose |
+|---|---|
+| `scraper.py` | Scrapes the book website, sorts the results by title, and writes `data/books.json`. |
+| `index.html` | The Bookfinder frontend. It reads `data/books.json` and provides search, filters, sorting, and book details. |
+| `data/books.json` | Generated catalogue data. It appears after you run the scraper. |
+| `requirements.txt` | Python libraries needed by the scraper. |
+| `README.md` | This setup guide. |
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-```
+These folders/files are supporting or optional:
 
-## Scrape books into local data
+- `tests/` contains automated checks; it is not needed to open the frontend.
+- `supabase_store.py`, `supabase/schema.sql`, and `.env.example` are only for the optional Supabase upload. The frontend does not use Supabase.
+- `.gitignore` and `data/.gitkeep` are Git housekeeping files.
 
-Run the scraper from the project folder:
+There is no separate demo page anymore: `index.html` is the actual frontend.
 
-```bash
-python scraper.py
-```
+## Run it on your computer
 
-By default, this fetches the catalogue, extracts each book's details, sorts the records alphabetically by title, and writes them to `data/books.json`. You can limit the run while trying it out:
-
-```bash
-python scraper.py --max-books 5 --verbose
-```
-
-The local JSON includes title, category, description, rating, prices and tax, availability and stock count, review count, product and image URLs, UPC, and the UTC scrape time. Use `--output` to choose another JSON, JSONL, or CSV file.
-
-## View the interface using the local data
-
-The interface reads `data/books.json` directly. After running the scraper, start a small local web server from the project folder:
+Open Terminal in the repository folder, then run:
 
 ```bash
-python -m http.server 8000
+python3 -m pip install -r requirements.txt
+python3 scraper.py
+python3 -m http.server 8000
 ```
 
-Then open [http://localhost:8000/demo.html](http://localhost:8000/demo.html). Do not open `demo.html` as a `file://` URL; browsers block its data-file request in that mode.
+Keep the Terminal window open while using the site. Open:
 
-The interface displays book covers, descriptions, categories, prices, ratings, availability, and reviews. It supports searching by title, UPC, category, or description, filtering by category and minimum rating, and sorting by title, price, rating, or stock. Expand **All scraped information** on a book card to see the remaining scraped fields.
+[http://localhost:8000/](http://localhost:8000/)
 
-For a hosted website, publish `demo.html` and the generated `data/books.json` together, preserving the `data/` folder path. The live interface needs the JSON file in the same website deployment.
+The first command installs the scraper's dependencies. The second scrapes and creates the sorted `data/books.json`. The third serves the project so the browser can load that JSON file. Do not open `index.html` by double-clicking it; browsers do not reliably allow it to fetch the JSON file from disk.
 
-## Optional Supabase upload
-
-Supabase is optional and separate from the local-file interface. If configured, the scraper can also upload a run by adding `--supabase`:
+To try a smaller scrape first:
 
 ```bash
-python scraper.py --max-books 5 --supabase
+python3 scraper.py --max-books 5
 ```
 
-This requires `SUPABASE_URL`, a backend secret key in `.env`, and the schema in `supabase/schema.sql`. Never put the secret key in browser code. The Bookfinder interface reads the local JSON file, not Supabase.
+The frontend shows each book's cover, description, category, price, rating, availability, stock, reviews, and original product link. It can search by title, UPC, category, or description, filter by category or minimum rating, and sort by title, price, rating, or stock. Expand **All scraped information** on a card for the remaining scraped fields.
 
-## Tests
+## Optional: upload a copy to Supabase
 
-Parser tests use local HTML fixtures and make no network requests:
+Supabase is not needed to run the scraper or frontend. To also upload a scrape to Supabase, configure `SUPABASE_URL` and a backend secret key in `.env`, apply `supabase/schema.sql`, and run:
 
 ```bash
-python -m unittest discover -s tests -v
+python3 scraper.py --supabase
 ```
+
+Never put the backend secret key in browser code.
+
+## Hosted frontend
+
+GitHub Pages is not enabled for this repository, so there is no hosted frontend URL yet. To host it, GitHub Pages must be enabled and the generated `data/books.json` must be included in the published site beside the `data/` folder. The repository is public, so a GitHub Pages site would also be public.
