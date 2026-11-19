@@ -15,7 +15,7 @@ This repository has one scraper and one frontend. The scraper writes the book ca
 These folders/files are supporting or optional:
 
 - `tests/` contains automated checks; it is not needed to open the frontend.
-- `supabase_store.py`, `supabase/schema.sql`, and `.env.example` are only for the optional Supabase upload. The frontend does not use Supabase.
+- `supabase_store.py` is the scraper's helper for the optional upload; keep it beside `scraper.py`. The frontend does not use Supabase. `supabase/schema.sql` and `.env.example` are only needed if you configure that upload.
 - `.gitignore` and `data/.gitkeep` are Git housekeeping files.
 
 There is no separate demo page anymore: `index.html` is the actual frontend.
