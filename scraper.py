@@ -183,7 +183,7 @@ class BooksScraper:
 
 
 def write_books(books: Iterable[Book], output: Path) -> int:
-    records = [asdict(book) for book in books]
+    records = sorted((asdict(book) for book in books), key=lambda record: record["title"].casefold())
     output.parent.mkdir(parents=True, exist_ok=True)
 
     if output.suffix.lower() == ".csv":
