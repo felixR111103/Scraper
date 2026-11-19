@@ -47,6 +47,13 @@
     .price { font-size:26px; font-weight:850; letter-spacing:-.04em; }
     .rating { color:var(--gold); letter-spacing:1px; white-space:nowrap; }
     .stock { color:var(--muted); font-size:13px; }
+    .description { margin:0; color:var(--muted); font-size:14px; line-height:1.55; }
+    .metadata { margin:14px 0; border-top:1px solid var(--line); padding-top:12px; }
+    .metadata summary { color:var(--green); font-weight:750; cursor:pointer; }
+    .metadata dl { display:grid; gap:8px; margin:12px 0 0; font-size:13px; }
+    .metadata dl div { display:flex; justify-content:space-between; gap:12px; }
+    .metadata dt { color:var(--muted); }
+    .metadata dd { margin:0; text-align:right; overflow-wrap:anywhere; }
     .source-link { margin-top:auto; color:var(--green); font-weight:750; text-decoration:none; }
     .source-link:hover { text-decoration:underline; }
     .empty,.error { grid-column:1/-1; padding:64px 24px; text-align:center; border:1px dashed #c8c2b5; border-radius:18px; color:var(--muted); }
@@ -90,62 +97,35 @@
       const books=getVisibleBooks();
       elements.count.innerHTML=`<strong>${books.length}</strong> of ${state.books.length} books`;
       if(!books.length){elements.books.innerHTML='<div class="empty"><strong>No books found</strong>Try a different title or clear your filters.</div>';return;}
-      elements.books.innerHTML=books.map(book=>`<article><div class="cover-wrap"><span class="category">${escapeHtml(book.category)}</span><img src="${escapeHtml(book.image_url)}" alt="Cover of ${escapeHtml(book.title)}" loading="lazy"></div><div class="content"><h2>${escapeHtml(book.title)}</h2><div class="upc">UPC ${escapeHtml(book.upc)}</div><div class="facts"><div><div class="price">£${escapeHtml(book.price_incl_tax_gbp)}</div><div class="stock">${escapeHtml(book.stock_count)} available</div></div><div class="rating" title="${escapeHtml(book.rating)} out of 5 stars" aria-label="${escapeHtml(book.rating)} out of 5 stars">${'★'.repeat(book.rating)}${'☆'.repeat(5-book.rating)}</div></div><a class="source-link" href="${escapeHtml(book.product_url)}" target="_blank" rel="noreferrer">View book details →</a></div></article>`).join('');
+      elements.books.innerHTML=books.map(book=>`<article><div class="cover-wrap"><span class="category">${escapeHtml(book.category)}</span><img src="${escapeHtml(book.image_url)}" alt="Cover of ${escapeHtml(book.title)}" loading="lazy"></div><div class="content"><h2>${escapeHtml(book.title)}</h2><div class="upc">UPC ${escapeHtml(book.upc)}</div><p class="description">${escapeHtml(book.description||'No description available.')}</p><div class="facts"><div><div class="price">£${escapeHtml(book.price_incl_tax_gbp)}</div><div class="stock">${escapeHtml(book.stock_count)} in stock</div></div><div class="rating" title="${escapeHtml(book.rating)} out of 5 stars" aria-label="${escapeHtml(book.rating)} out of 5 stars">${'★'.repeat(Number(book.rating))}${'☆'.repeat(5-Number(book.rating))}</div></div><div class="stock">${escapeHtml(book.availability_text)} · ${escapeHtml(book.number_of_reviews)} reviews</div><details class="metadata"><summary>All scraped information</summary><dl><div><dt>Category</dt><dd>${escapeHtml(book.category)}</dd></div><div><dt>Rating</dt><dd>${escapeHtml(book.rating)} / 5</dd></div><div><dt>Price before tax</dt><dd>£${escapeHtml(book.price_excl_tax_gbp)}</dd></div><div><dt>Price including tax</dt><dd>£${escapeHtml(book.price_incl_tax_gbp)}</dd></div><div><dt>Tax</dt><dd>£${escapeHtml(book.tax_gbp)}</dd></div><div><dt>Stock count</dt><dd>${escapeHtml(book.stock_count)}</dd></div><div><dt>Availability</dt><dd>${escapeHtml(book.availability_text)}</dd></div><div><dt>Reviews</dt><dd>${escapeHtml(book.number_of_reviews)}</dd></div><div><dt>UPC</dt><dd>${escapeHtml(book.upc)}</dd></div><div><dt>Scraped at (UTC)</dt><dd>${escapeHtml(book.scraped_at)}</dd></div></dl></details><a class="source-link" href="${escapeHtml(book.product_url)}" target="_blank" rel="noreferrer">View original product page →</a></div></article>`).join('');
     }
     elements.search.addEventListener('input',event=>{state.query=event.target.value;render()});
     elements.category.addEventListener('change',event=>{state.category=event.target.value;render()});
     elements.rating.addEventListener('change',event=>{state.rating=Number(event.target.value);render()});
     elements.sort.addEventListener('change',event=>{state.sort=event.target.value;render()});
     elements.clear.addEventListener('click',()=>{state.query='';state.category='';state.rating=0;state.sort='title-asc';elements.search.value='';elements.category.value='';elements.rating.value='0';elements.sort.value='title-asc';elements.search.focus();render()});
-    // A publishable key is safe for browser use because the SQL schema grants read-only access.
-    // Never put the Supabase secret key in this file.
-    const SUPABASE_URL = 'https://wqbnfmkkjstfwgxtjzbu.supabase.co';
-    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_N9_la2WFGgOT11wFZrdNAQ_EVXTsOE2';
-    const PAGE_SIZE = 500;
+    // The catalogue is generated by scraper.py and served from this project folder.
+    const DATA_URL = './data/books.json';
 
-    async function fetchSupabaseBooks() {
-      if (SUPABASE_URL.includes('your-project') || SUPABASE_PUBLISHABLE_KEY.includes('your_key')) {
-        throw new Error('Add your Supabase project URL and publishable key in demo.html.');
+    async function fetchLocalBooks() {
+      const response = await fetch(DATA_URL, { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error(`Could not load ${DATA_URL} (${response.status}). Run the scraper first.`);
       }
-
-      const books = [];
-      for (let offset = 0; ; offset += PAGE_SIZE) {
-        const endpoint = new URL(SUPABASE_URL.replace(/\/+$/, '') + '/rest/v1/current_books');
-        endpoint.search = new URLSearchParams({
-          select: '*',
-          order: 'title.asc',
-          limit: String(PAGE_SIZE),
-          offset: String(offset)
-        });
-
-        const response = await fetch(endpoint, {
-          headers: {
-            apikey: SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
-          }
-        });
-        if (!response.ok) {
-          const details = await response.text();
-          throw new Error(`Supabase request failed (${response.status})${details ? `: ${details.slice(0, 240)}` : ''}`);
-        }
-
-        const page = await response.json();
-        if (!Array.isArray(page)) throw new Error('Supabase returned an unexpected response.');
-        books.push(...page);
-        if (page.length < PAGE_SIZE) break;
-      }
+      const books = await response.json();
+      if (!Array.isArray(books)) throw new Error('The local data file must contain a JSON array of books.');
       return books;
     }
 
-    fetchSupabaseBooks().then(books=>{
+    fetchLocalBooks().then(books=>{
       state.books=books;
       [...new Set(books.map(book=>book.category))].sort().forEach(category=>
         elements.category.insertAdjacentHTML('beforeend',`<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`)
       );
       render();
     }).catch(error=>{
-      elements.count.textContent='Unable to load catalogue';
-      elements.books.innerHTML=`<div class="error"><strong>Could not load the Supabase catalogue</strong>${escapeHtml(error.message)}</div>`;
+      elements.count.textContent='Unable to load local catalogue';
+      elements.books.innerHTML=`<div class="error"><strong>Could not load local book data</strong>${escapeHtml(error.message)}<br>Run <code>python scraper.py</code>, then serve this folder with <code>python -m http.server 8000</code>.</div>`;
     });
   </script>
 </body>
