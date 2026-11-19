@@ -23,7 +23,6 @@ from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup, Tag
-from supabase_store import SupabaseError, SupabaseStore
 
 
 BASE_URL = "https://books.toscrape.com/"
@@ -226,11 +225,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output", type=Path, default=Path("data/books.json"))
     parser.add_argument("--delay", type=non_negative_float, default=0.25, help="Delay between requests")
     parser.add_argument("--timeout", type=non_negative_float, default=20.0, help="Request timeout")
-    parser.add_argument(
-        "--supabase",
-        action="store_true",
-        help="Upload the scraped records to the configured Supabase database",
-    )
     parser.add_argument("--verbose", action="store_true")
     return parser
 
@@ -245,20 +239,10 @@ def main() -> int:
     try:
         books = scraper.scrape(max_books=args.max_books, max_pages=args.max_pages)
         count = write_books(books, args.output)
-        run_id = None
-        if args.supabase:
-            store = SupabaseStore.from_env()
-            run_id = store.upload_books(
-                books,
-                max_books=args.max_books,
-                max_pages=args.max_pages,
-            )
-    except (requests.RequestException, ScrapeError, SupabaseError, OSError, ValueError) as error:
+    except (requests.RequestException, ScrapeError, OSError, ValueError) as error:
         logging.error("Scrape failed: %s", error)
         return 1
     print(f"Saved {count} books to {args.output}")
-    if run_id:
-        print(f"Uploaded {count} books to Supabase (run {run_id})")
     return 0
 
 

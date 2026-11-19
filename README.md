@@ -12,10 +12,9 @@ This repository has one scraper and one frontend. The scraper writes the book ca
 | `requirements.txt` | Python libraries needed by the scraper. |
 | `README.md` | This setup guide. |
 
-These folders/files are supporting or optional:
+These files are supporting:
 
 - `tests/` contains automated checks; it is not needed to open the frontend.
-- `supabase_store.py` is the scraper's helper for the optional upload; keep it beside `scraper.py`. The frontend does not use Supabase. `supabase/schema.sql` and `.env.example` are only needed if you configure that upload.
 - `.gitignore` and `data/.gitkeep` are Git housekeeping files.
 
 There is no separate demo page anymore: `index.html` is the actual frontend.
@@ -43,16 +42,6 @@ python3 scraper.py --max-books 5
 ```
 
 The frontend shows each book's cover, description, category, price, rating, availability, stock, reviews, and original product link. It can search by title, UPC, category, or description, filter by category or minimum rating, and sort by title, price, rating, or stock. Expand **All scraped information** on a card for the remaining scraped fields.
-
-## Optional: upload a copy to Supabase
-
-Supabase is not needed to run the scraper or frontend. To also upload a scrape to Supabase, configure `SUPABASE_URL` and a backend secret key in `.env`, apply `supabase/schema.sql`, and run:
-
-```bash
-python3 scraper.py --supabase
-```
-
-Never put the backend secret key in browser code.
 
 ## Hosted frontend
 
