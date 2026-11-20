@@ -4,8 +4,11 @@ __pycache__/
 .pytest_cache/
 data/*.json
 !data/books.json
+!data/demo_3.json
+!data/sample_5.json
 data/*.jsonl
 data/*.csv
+!data/three_pages.csv
 !data/.gitkeep
 .env
 .DS_Store
