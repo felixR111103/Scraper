@@ -8,4 +8,5 @@ data/*.jsonl
 data/*.csv
 !data/.gitkeep
 .env
+.DS_Store
 
