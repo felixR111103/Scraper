@@ -154,6 +154,9 @@ class BooksScraper:
     def fetch(self, url: str) -> str:
         response = self.session.get(url, timeout=self.timeout)
         response.raise_for_status()
+        # Books to Scrape serves UTF-8 content, but its HTTP headers can cause
+        # clients to fall back to Latin-1 and corrupt punctuation and accents.
+        response.encoding = "utf-8"
         return response.text
 
     def scrape(self, max_books: int | None = None, max_pages: int | None = None) -> list[Book]:

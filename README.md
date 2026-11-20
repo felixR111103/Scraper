@@ -37,7 +37,7 @@ For every book, the scraper collects:
 - product and cover-image URLs; and
 - the UTC time at which the record was collected.
 
-The scraper uses a descriptive user-agent and waits 0.25 seconds between requests by default. It also supports limits for small test runs, so the whole catalogue does not need to be downloaded during development.
+The scraper explicitly decodes the website as UTF-8 so that punctuation and accented characters are preserved. It uses a descriptive user-agent and waits 0.25 seconds between requests by default. It also supports limits for small test runs, so the whole catalogue does not need to be downloaded during development.
 
 ## Data persistence
 
@@ -171,7 +171,6 @@ One challenge was keeping track of the different files and understanding which o
 
 - The data is a static snapshot and can become outdated until the scraper is run again.
 - The scraper depends on the current HTML structure of Books to Scrape. Changes to that structure may require updated selectors.
-- Some descriptions in the current dataset contain incorrectly decoded special characters and should be cleaned before text analysis.
 - Two records in the complete dataset have no description.
 - Categories such as `Default` and `Add a comment` come from the source website but are not meaningful genres.
 - Tax and review fields contain only zeroes in the current source data.
@@ -197,6 +196,7 @@ AI assistance was mainly used for translating ideas I had from basic English int
 ├── tests/
 │   └── test_scraper.py     # Automated parser tests
 ├── .gitignore
+├── AUDIT.md                # Publication audit and remaining limitations
 ├── index.html              # Bookfinder frontend
 ├── README.md               # Project documentation
 ├── requirements.txt        # Python dependencies

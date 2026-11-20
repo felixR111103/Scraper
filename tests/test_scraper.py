@@ -1,6 +1,6 @@
 import unittest
 
-from scraper import clean_money, parse_book_page, parse_catalogue_page, parse_stock_count
+from scraper import BooksScraper, clean_money, parse_book_page, parse_catalogue_page, parse_stock_count
 
 
 CATALOGUE_HTML = """
@@ -49,6 +49,26 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(clean_money("£1,234.50"), "1234.50")
         self.assertEqual(parse_stock_count("In stock (22 available)"), 22)
         self.assertEqual(parse_stock_count("Out of stock"), 0)
+
+    def test_fetch_decodes_source_as_utf8(self):
+        class FakeResponse:
+            encoding = "latin-1"
+            content = "Café — poetry".encode("utf-8")
+
+            def raise_for_status(self):
+                return None
+
+            @property
+            def text(self):
+                return self.content.decode(self.encoding)
+
+        class FakeSession:
+            def get(self, url, timeout):
+                return FakeResponse()
+
+        scraper = BooksScraper(delay=0)
+        scraper.session = FakeSession()
+        self.assertEqual(scraper.fetch("https://example.test/book"), "Café — poetry")
 
 
 if __name__ == "__main__":
